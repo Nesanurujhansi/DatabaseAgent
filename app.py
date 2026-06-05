@@ -113,7 +113,9 @@ try:
     agent = get_sql_agent()
     report_gen = ReportGenerator()
 except Exception as e:
-    st.error("Failed to initialize Database Agent. Please check database connection and environment settings.")
+    import traceback
+    st.error(f"Failed to initialize Database Agent: {e}")
+    st.code(traceback.format_exc(), language="python")
     st.stop()
 
 if "messages" not in st.session_state:
@@ -176,7 +178,9 @@ with st.sidebar:
                 # Reset standard messages when report is shown to avoid clutter
                 st.session_state.messages = []
             except Exception as e:
-                st.error("An error occurred while generating the report. Please verify database availability.")
+                import traceback
+                st.error(f"Error generating report: {e}")
+                st.code(traceback.format_exc(), language="python")
 
 # --- Main Canvas Layout ---
 
@@ -288,11 +292,30 @@ else:
                 
             except Exception as e:
                 error_msg = str(e)
-                # Safe check for database write violations caught by SecureSQLDatabase or native database errors
+                import traceback
+                tb_str = traceback.format_exc()
+                
+                # Parse exact error category
                 if "read-only access" in error_msg.lower() or "access denied" in error_msg.lower() or "privilege" in error_msg.lower():
-                    response_text = "This assistant has read-only access to the database and is not permitted to perform data modifications."
+                    response_text = f"❌ **Permission / Access Denied Error:** {error_msg}"
+                elif "table" in error_msg.lower() and "doesn't exist" in error_msg.lower():
+                    response_text = f"❌ **Database Error (Table Not Found):** {error_msg}"
+                elif "column" in error_msg.lower() and "unknown" in error_msg.lower():
+                    response_text = f"❌ **Database Error (Column Not Found):** {error_msg}"
+                elif "syntax" in error_msg.lower() or "syntax error" in error_msg.lower():
+                    response_text = f"❌ **SQL Syntax Error:** {error_msg}"
                 else:
-                    response_text = "I encountered an issue querying the database. Please try rephrasing your question or checking query parameters."
+                    response_text = f"❌ **Query Execution Error:** {error_msg}"
                 
                 status_placeholder.markdown(response_text)
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
+                
+                # Render SQL and stack trace in UI
+                if handler.executed_queries:
+                    st.error(f"Attempted SQL: {handler.executed_queries[-1]}")
+                st.code(tb_str, language="python")
+                
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": response_text,
+                    "sql": "\n\n".join(handler.executed_queries) if handler.executed_queries else "N/A"
+                })
