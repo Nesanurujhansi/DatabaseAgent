@@ -30,7 +30,7 @@ The project translates natural language queries into accurate SQL statements, ex
 
 ## Database Schema
 
-The database consists of **10 normalized tables**:
+The database consists of **12 normalized tables**:
 
 1. **`customers`**: Stores unique customer information.
    - `customer_id` (INT, PRIMARY KEY)
@@ -51,6 +51,7 @@ The database consists of **10 normalized tables**:
    - `product_id` (INT, FOREIGN KEY)
    - `quantity` (INT)
    - `order_date` (TIMESTAMP)
+   - `promotion_id` (INT, FOREIGN KEY referencing `promotions`)
 
 4. **`stores`**: Tracks physical store locations.
    - `store_id` (INT, PRIMARY KEY)
@@ -100,6 +101,27 @@ The database consists of **10 normalized tables**:
     - `payment_status` (VARCHAR)
     - `payment_date` (TIMESTAMP)
 
+11. **`promotions`**: Tracks marketing campaigns and discount codes.
+    - `promotion_id` (INT, PRIMARY KEY)
+    - `code` (VARCHAR, UNIQUE)
+    - `discount_percentage` (DECIMAL)
+    - `start_date` (DATE)
+    - `end_date` (DATE)
+
+12. **`returns`**: Tracks physical product returns and RMAs.
+    - `return_id` (INT, PRIMARY KEY)
+    - `order_id` (INT, FOREIGN KEY)
+    - `return_date` (TIMESTAMP)
+    - `reason` (VARCHAR)
+    - `status` (VARCHAR)
+
+### Database Performance Enhancements
+To optimize LLM query translation and ensure high-speed query performance, the database schema includes targeted performance indexing:
+- **`idx_orders_order_date`** on `orders(order_date)`
+- **`idx_payments_payment_date`** on `payments(payment_date)`
+- **`idx_shipments_shipment_date`** on `shipments(shipment_date)`
+- **`idx_orders_promotion_id`** on `orders(promotion_id)`
+
 ## How Outputs Are Generated
 Outputs are generated in two passes for maximum security and token efficiency:
 1. **SQL Generation:** Gemini generates raw SQL based on the database schema.
@@ -147,11 +169,15 @@ DB_PORT=3306
 **4. Setup the Database Schema (Create tables):**
 ```bash
 python database/create_normalized_tables.py
+python database/create_logistics_tables.py
+python database/upgrade_schema_to_10.py
 ```
 
 **5. Populate Dummy Data into the Database:**
 ```bash
 python database/populate_normalized_data.py
+python database/populate_logistics_data.py
+python database/populate_10_data.py
 ```
 
 **6. Test the AI Connection and Logic Configuration:**
