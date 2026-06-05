@@ -108,20 +108,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Initialize Session State ---
-if "agent" not in st.session_state:
-    try:
-        st.session_state.agent = get_sql_agent()
-    except Exception as e:
-        st.error("Failed to initialize SQL Agent. Please check database connection and environment settings.")
-        st.stop()
-
-if "report_gen" not in st.session_state:
-    try:
-        st.session_state.report_gen = ReportGenerator()
-    except Exception as e:
-        st.error("Failed to initialize Report Generator. Please check database connection and environment settings.")
-        st.stop()
+# --- Initialize SQL Agent & Report Generator ---
+try:
+    agent = get_sql_agent()
+    report_gen = ReportGenerator()
+except Exception as e:
+    st.error("Failed to initialize Database Agent. Please check database connection and environment settings.")
+    st.stop()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -137,8 +130,6 @@ with st.sidebar:
     if st.button("＋ New Chat", use_container_width=True, type="primary"):
         st.session_state.messages = []
         st.session_state.active_report = None
-        # Re-initialize the agent to clear context
-        st.session_state.agent = get_sql_agent()
         st.rerun()
 
     st.markdown("<hr style='border: 0.5px solid #334155; margin: 15px 0;'/>", unsafe_allow_html=True)
@@ -181,7 +172,7 @@ with st.sidebar:
         with st.spinner(f"Generating {selected_report_opt}..."):
             try:
                 report_type = report_map[selected_report_opt]
-                st.session_state.active_report = st.session_state.report_gen.generate_report(report_type)
+                st.session_state.active_report = report_gen.generate_report(report_type)
                 # Reset standard messages when report is shown to avoid clutter
                 st.session_state.messages = []
             except Exception as e:
@@ -262,7 +253,7 @@ else:
             
             try:
                 # Invoke SQL agent with tracking callback
-                result = st.session_state.agent.invoke(
+                result = agent.invoke(
                     {"input": prompt},
                     config={"callbacks": [handler]}
                 )
@@ -285,7 +276,7 @@ else:
                     last_query = handler.executed_queries[-1]
                     if is_read_only_query(last_query):
                         try:
-                            df_result = st.session_state.report_gen._execute_sql(last_query)
+                            df_result = report_gen._execute_sql(last_query)
                             if not df_result.empty:
                                 message_data["df_dict"] = df_result.to_dict()
                                 if show_raw_tables:
