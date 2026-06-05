@@ -180,9 +180,24 @@ Rules:
         
         prompt = prompt_template.format(title=title, table_data=table_markdown)
         
-        # Generate response using Gemini
-        # We handle invocation safely
-        raw_content = self.llm.invoke(prompt).content
+        # Generate response using Gemini with retry backoff
+        import time
+        import random
+        max_retries = 5
+        raw_content = ""
+        for i in range(max_retries):
+            try:
+                raw_content = self.llm.invoke(prompt).content
+                break
+            except Exception as e:
+                err_msg = str(e)
+                if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
+                    if i == max_retries - 1:
+                        raise e
+                    sleep_time = (2 ** i) + random.uniform(0.1, 1.0)
+                    time.sleep(sleep_time)
+                else:
+                    raise e
         
         # Safely extract text from response (handles list-of-dicts or raw string)
         if isinstance(raw_content, list):
