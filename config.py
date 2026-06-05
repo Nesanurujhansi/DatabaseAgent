@@ -12,7 +12,7 @@ class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     
     # AI Model Version
-    MODEL_NAME = "gemini-3.5-flash"
+    MODEL_NAME = "gemini-2.5-flash"
     
     # System Instruction for the Bot
     SYSTEM_INSTRUCTION = (
