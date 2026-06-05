@@ -20,10 +20,10 @@ class Config:
         "Keep your responses concise and engaging."
     )
 
-    # Database Settings
+    # Database Settings (Hardened Read-Only defaults for AI runtime)
     DB_HOST = os.getenv("DB_HOST", "localhost")
-    DB_USER = os.getenv("DB_USER", "root")
-    DB_PASSWORD = os.getenv("DB_PASSWORD", "jhansi")
+    DB_USER = os.getenv("DB_USER", "readonly_user")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "readonly_pass")
     DB_NAME = os.getenv("DB_NAME", "customerss")
     DB_PORT = os.getenv("DB_PORT", "3306")
 

@@ -113,14 +113,14 @@ if "agent" not in st.session_state:
     try:
         st.session_state.agent = get_sql_agent()
     except Exception as e:
-        st.error(f"Failed to initialize SQL Agent: {e}")
+        st.error("Failed to initialize SQL Agent. Please check database connection and environment settings.")
         st.stop()
 
 if "report_gen" not in st.session_state:
     try:
         st.session_state.report_gen = ReportGenerator()
     except Exception as e:
-        st.error(f"Failed to initialize Report Generator: {e}")
+        st.error("Failed to initialize Report Generator. Please check database connection and environment settings.")
         st.stop()
 
 if "messages" not in st.session_state:
@@ -185,7 +185,7 @@ with st.sidebar:
                 # Reset standard messages when report is shown to avoid clutter
                 st.session_state.messages = []
             except Exception as e:
-                st.error(f"Error generating report: {e}")
+                st.error("An error occurred while generating the report. Please verify database availability.")
 
 # --- Main Canvas Layout ---
 
@@ -297,11 +297,11 @@ else:
                 
             except Exception as e:
                 error_msg = str(e)
-                # Safe check for database write violations caught by SecureSQLDatabase
-                if "read-only access" in error_msg.lower():
-                    response_text = "This assistant has read-only access to the database."
+                # Safe check for database write violations caught by SecureSQLDatabase or native database errors
+                if "read-only access" in error_msg.lower() or "access denied" in error_msg.lower() or "privilege" in error_msg.lower():
+                    response_text = "This assistant has read-only access to the database and is not permitted to perform data modifications."
                 else:
-                    response_text = f"An error occurred: {error_msg}"
+                    response_text = "I encountered an issue querying the database. Please try rephrasing your question or checking query parameters."
                 
                 status_placeholder.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
