@@ -30,7 +30,7 @@ The project translates natural language queries into accurate SQL statements, ex
 
 ## Database Schema
 
-The database consists of **6 normalized tables**:
+The database consists of **10 normalized tables**:
 
 1. **`customers`**: Stores unique customer information.
    - `customer_id` (INT, PRIMARY KEY)
@@ -71,6 +71,34 @@ The database consists of **6 normalized tables**:
    - `rating` (INT, 1 to 5)
    - `comment` (TEXT)
    - `review_date` (TIMESTAMP)
+
+7. **`suppliers`**: Tracks vendors supplying products.
+   - `supplier_id` (INT, PRIMARY KEY)
+   - `supplier_name` (VARCHAR)
+   - `contact_email` (VARCHAR)
+   - `country` (VARCHAR)
+
+8. **`inventory`**: Tracks stock levels and links products to suppliers.
+   - `inventory_id` (INT, PRIMARY KEY)
+   - `product_id` (INT, FOREIGN KEY)
+   - `supplier_id` (INT, FOREIGN KEY)
+   - `stock_quantity` (INT)
+   - `reorder_level` (INT)
+
+9. **`shipments`**: Tracks delivery statuses for orders.
+   - `shipment_id` (INT, PRIMARY KEY)
+   - `order_id` (INT, FOREIGN KEY)
+   - `shipment_date` (TIMESTAMP)
+   - `delivery_status` (VARCHAR)
+   - `carrier` (VARCHAR)
+
+10. **`payments`**: Tracks financial transactions for orders.
+    - `payment_id` (INT, PRIMARY KEY)
+    - `order_id` (INT, FOREIGN KEY)
+    - `payment_method` (VARCHAR)
+    - `amount_paid` (DECIMAL)
+    - `payment_status` (VARCHAR)
+    - `payment_date` (TIMESTAMP)
 
 ## How Outputs Are Generated
 Outputs are generated in two passes for maximum security and token efficiency:
