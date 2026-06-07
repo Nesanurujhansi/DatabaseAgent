@@ -226,3 +226,15 @@ def get_sql_agent():
     )
     db = get_db_instance()
     return CompactSQLAgent(llm, db)
+
+def format_agent_output(output) -> str:
+    """
+    Cleans and extracts natural language text from responses.
+    """
+    if isinstance(output, list):
+        text_parts = []
+        for part in output:
+            if isinstance(part, dict) and "text" in part:
+                text_parts.append(part["text"])
+        return "".join(text_parts).strip()
+    return str(output).strip()
